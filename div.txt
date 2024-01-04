@@ -1,0 +1,68 @@
+<div>
+ <input type="">
+</div>
+
+
+<style>
+.color_box:checked ~.check{
+background-color:
+}
+.color_box input:checked~ .check:after{
+ display:block;
+}
+.check{
+ position:absolute;
+background-color:#fff;
+ width:10px;
+ height:10px;
+ margin-top:3.5px;
+ margin-left:-19.5px;
+ border:1px solid black;
+}
+.check:after{
+ content:"";
+ position:absolute;
+ display: none;
+}
+.color_box:hover input ~.chek{
+ background-color:#fff
+}
+</style>
+intercept(request:HttpRequest<unknown>, next:HttpHandler<unknown>):observable<HttpEvent<unknown>>{
+	if(myToken){
+	 request=reqest.clone({
+ 	 setHeaders:{Authorization:`Bearer{myToken}`}
+	
+          }
+ })
+   
+ return next.handle(request).pipe({
+	catchError((err:any)=>{
+		if(err instanceof HttpErrorRespone){
+			if(err.status===401){
+				return unAuthorizedErrorHandler(request,next);
+			}
+    		}
+	})
+})
+}
+unAuthorizedErrorHandler(req:HttpHandler<any>, next:HttpResponse<any>){
+	let tokeApiModel= new TokenModelApi
+	tokeAPiModel.accessToken= this.auth.getToken();
+	tokeApiModel.refreshToken= this.auth.getrefreshToken();
+	
+	return auth.renewToken(tokeApiModel).pipe({
+	switchMap(data:TokenApiModel){
+	   this.auth.storeRefreshToken(data.refreshToken);
+	   this.auth.storeToken(data.accessToken);
+	   req=req.clone({
+		setHeaders:Authorization{`Bearer{data.accessToken}}
+           })
+	 catchError((err)=>{
+	     this.auth.toast.warning({details:'warning',summary:"Session Expire login again"});
+             this.auth.route.navigate(['login'])
+	  })	
+	}
+
+        })
+}
